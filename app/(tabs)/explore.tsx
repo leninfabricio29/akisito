@@ -1,112 +1,179 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { BusinessCard } from '@/components/business/business-card';
+import { AppText, Button, Chip, EmptyState, Skeleton, TextField } from '@/components/ui';
+import { useFavoriteToggle } from '@/hooks/use-favorite-toggle';
+import { getApproximateLocation } from '@/hooks/use-current-location';
+import { usePaginated } from '@/hooks/use-paginated';
+import { businessService } from '@/services';
+import type { BusinessSummary, Category } from '@/services';
+import { colors, radius, SCREEN_PADDING, spacing } from '@/theme';
+import { categoryIcon } from '@/utils/category-icon';
 
-export default function TabTwoScreen() {
+const NEARBY_RADIUS_M = 15_000;
+
+type Coords = { latitude: number; longitude: number };
+
+export default function ExploreScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ category?: string; focus?: string; nearby?: string }>();
+  const searchRef = useRef<TextInput>(null);
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [category, setCategory] = useState<number | null>(params.category ? Number(params.category) : null);
+  const [query, setQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const [coords, setCoords] = useState<Coords | null>(null);
+  const [useNearby, setUseNearby] = useState(true);
+  const [locating, setLocating] = useState(true);
+
+  useEffect(() => {
+    businessService.categories().then(setCategories).catch(() => undefined);
+    getApproximateLocation()
+      .then((c) => {
+        setCoords(c);
+        if (!c) setUseNearby(false);
+      })
+      .finally(() => setLocating(false));
+  }, []);
+
+  // Parámetros que llegan desde Inicio (categoría, buscar, cerca de mí).
+  useEffect(() => {
+    if (params.category) setCategory(Number(params.category));
+  }, [params.category]);
+  useEffect(() => {
+    if (params.focus) setTimeout(() => searchRef.current?.focus(), 250);
+  }, [params.focus]);
+  useEffect(() => {
+    if (params.nearby && coords) setUseNearby(true);
+  }, [params.nearby, coords]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(query.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const nearby = useNearby && coords;
+  const list = usePaginated<BusinessSummary>(
+    (page) =>
+      businessService.list({
+        page,
+        search: search || undefined,
+        category: category ?? undefined,
+        ...(nearby ? { lat: coords.latitude, lng: coords.longitude, radius: NEARBY_RADIUS_M } : {}),
+      }),
+    [search, category, nearby, coords?.latitude, coords?.longitude],
+    !locating,
+  );
+
+  const { setItems } = list;
+  const updateFavorite = useCallback(
+    (id: number, value: boolean) => setItems((prev) => prev.map((b) => (b.id === id ? { ...b, is_favorite: value } : b))),
+    [setItems],
+  );
+  const toggleFavorite = useFavoriteToggle(updateFavorite);
+
+  const header = (
+    <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+      <AppText variant="h1">Explorar</AppText>
+      <AppText color="textSecondary" style={{ marginBottom: spacing.md }}>
+        {nearby ? 'Negocios aliados cerca de ti' : 'Todos los negocios aliados'}
+      </AppText>
+      <TextField
+        ref={searchRef}
+        icon="search"
+        placeholder="Buscar por nombre, categoría o dirección"
+        value={query}
+        onChangeText={setQuery}
+        returnKeyType="search"
+        autoCorrect={false}
+      />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        {coords && (
+          <Chip label="Cerca de mí" icon="navigate" selected={useNearby} onPress={() => setUseNearby((v) => !v)} />
+        )}
+        <Chip label="Todos" selected={category === null} onPress={() => setCategory(null)} />
+        {categories.map((c) => (
+          <Chip
+            key={c.id}
+            label={c.name}
+            icon={categoryIcon(c.icon)}
+            selected={category === c.id}
+            onPress={() => setCategory(category === c.id ? null : c.id)}
+          />
+        ))}
+      </ScrollView>
+      {!list.loading && (
+        <AppText variant="caption" color="textMuted" style={{ marginTop: spacing.sm }}>
+          {list.total} {list.total === 1 ? 'negocio' : 'negocios'}
+        </AppText>
+      )}
+    </View>
+  );
+
+  const loadingState = (
+    <View style={styles.list}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} height={210} rounded={radius.lg} style={{ marginBottom: spacing.md }} />
+      ))}
+    </View>
+  );
+
+  const empty = list.error ? (
+    <EmptyState icon="cloud-offline-outline" title="No pudimos cargar los negocios" message={list.error} actionLabel="Reintentar" onAction={list.retry} />
+  ) : nearby ? (
+    <EmptyState
+      icon="map-outline"
+      title="No hay negocios cerca"
+      message="Aún no tenemos aliados en un radio de 15 km."
+      actionLabel="Ver todos los negocios"
+      onAction={() => setUseNearby(false)}
+    />
+  ) : (
+    <EmptyState icon="search-outline" title="Sin resultados" message="Prueba con otra búsqueda o categoría." />
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <View style={styles.root}>
+      <FlatList
+        data={list.items}
+        keyExtractor={(b) => String(b.id)}
+        ListHeaderComponent={header}
+        ListEmptyComponent={list.loading || locating ? loadingState : empty}
+        contentContainerStyle={{ paddingBottom: spacing.xxxl * 2 }}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <BusinessCard
+              business={item}
+              onPress={() => router.push({ pathname: '/businesses/[id]', params: { id: String(item.id) } })}
+              onToggleFavorite={() => toggleFavorite(item.id, item.is_favorite)}
+            />
+          </View>
+        )}
+        onEndReached={list.loadMore}
+        onEndReachedThreshold={0.4}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={list.refreshing} onRefresh={list.refresh} colors={[colors.primary]} />}
+        ListFooterComponent={
+          list.loadingMore ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
+          ) : list.error && list.items.length ? (
+            <Button title="Reintentar" variant="ghost" onPress={list.retry} />
+          ) : null
+        }
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  root: { flex: 1, backgroundColor: colors.background },
+  header: { paddingHorizontal: SCREEN_PADDING, paddingBottom: spacing.md },
+  chips: { gap: spacing.sm, paddingRight: spacing.lg },
+  list: { paddingHorizontal: SCREEN_PADDING },
+  item: { paddingHorizontal: SCREEN_PADDING, marginBottom: spacing.md },
 });

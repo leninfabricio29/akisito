@@ -1,98 +1,135 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, Linking, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { BusinessMiniCard } from '@/components/business/business-mini-card';
+import { BannerCarousel } from '@/components/home/banner-carousel';
+import { CategoriesCard } from '@/components/home/categories-card';
+import { HOME_HEADER_OVERLAP, HomeHeader } from '@/components/home/home-header';
+import { SearchCard } from '@/components/home/search-card';
+import { TAB_BAR_HEIGHT } from '@/components/navigation/tab-bar';
+import { EmptyState, SectionHeader, Skeleton } from '@/components/ui';
+import { useAuth } from '@/context/auth-context';
+import { useUnreadCount } from '@/hooks/use-unread-count';
+import { businessService, contentService } from '@/services';
+import type { Banner, BusinessSummary, Category } from '@/services';
+import { colors, radius, SCREEN_PADDING, spacing } from '@/theme';
+
+const PARTNERS_VISIBLE = 3;
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const { user } = useAuth();
+  const unread = useUnreadCount();
+  const { width } = useWindowDimensions();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [partners, setPartners] = useState<BusinessSummary[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const contentWidth = width - SCREEN_PADDING * 2;
+  const partnerWidth = (contentWidth - spacing.sm * (PARTNERS_VISIBLE - 1)) / PARTNERS_VISIBLE;
+
+  const load = useCallback(async () => {
+    const [cats, list, ads] = await Promise.allSettled([
+      businessService.categories(),
+      businessService.list({ ordering: '-rating_avg', page_size: 12 }),
+      contentService.banners(),
+    ]);
+    if (cats.status === 'fulfilled') setCategories(cats.value);
+    if (list.status === 'fulfilled') setPartners(list.value.results);
+    if (ads.status === 'fulfilled') setBanners(ads.value);
+  }, []);
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+  }, [load]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
+
+  const openBusiness = (id: number) => router.push({ pathname: '/businesses/[id]', params: { id: String(id) } });
+
+  const onBanner = (banner: Banner) => {
+    if (banner.business) openBusiness(banner.business);
+    else if (banner.link_url) void Linking.openURL(banner.link_url);
+  };
+
+  return (
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + spacing.xxxl }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.onPrimary} colors={[colors.primary]} />
+      }
+    >
+      <HomeHeader
+        name={user ? `${user.first_name} ${user.last_name}` : ''}
+        avatar={user?.avatar ?? null}
+        unread={unread}
+        onNotifications={() => router.push('/notifications')}
+        onProfile={() => router.navigate('/(tabs)/profile')}
+      />
+
+      <View style={styles.content}>
+        <SearchCard
+          onPress={() => router.navigate({ pathname: '/(tabs)/explore', params: { focus: String(Date.now()) } })}
+          onNearby={() => router.navigate({ pathname: '/(tabs)/explore', params: { nearby: String(Date.now()) } })}
+        />
+
+        <CategoriesCard
+          categories={categories}
+          loading={loading}
+          onSelect={(c) =>
+            router.navigate({ pathname: '/(tabs)/explore', params: { category: String(c.id), categoryName: c.name } })
+          }
+        />
+
+        <View>
+          <SectionHeader
+            title="Negocios aliados"
+            subtitle="Suma puntos en cada visita"
+            actionLabel="Ver todos"
+            onAction={() => router.navigate('/(tabs)/explore')}
+          />
+          {loading ? (
+            <View style={styles.partnersRow}>
+              {Array.from({ length: PARTNERS_VISIBLE }).map((_, i) => (
+                <Skeleton key={i} width={partnerWidth} height={partnerWidth + 34} rounded={radius.lg} />
+              ))}
+            </View>
+          ) : partners.length ? (
+            <FlatList
+              data={partners}
+              horizontal
+              keyExtractor={(b) => String(b.id)}
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={partnerWidth + spacing.sm}
+              decelerationRate="fast"
+              contentContainerStyle={styles.partnersRow}
+              renderItem={({ item }) => (
+                <BusinessMiniCard business={item} width={partnerWidth} onPress={() => openBusiness(item.id)} />
+              )}
+            />
+          ) : (
+            <EmptyState compact icon="storefront-outline" title="Pronto habrá negocios aliados" />
+          )}
+        </View>
+
+        {banners.length > 0 && <BannerCarousel banners={banners} width={contentWidth} onPress={onBanner} />}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: SCREEN_PADDING, marginTop: -HOME_HEADER_OVERLAP, gap: spacing.xl },
+  partnersRow: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.xxs },
 });
