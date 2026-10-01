@@ -20,7 +20,7 @@ type MenuItem = { icon: keyof typeof Ionicons.glyphMap; label: string; hint?: st
 const MENU: MenuItem[][] = [
   [
     { icon: 'receipt-outline', label: 'Mis canjes', hint: 'Códigos y estado de tus premios', href: '/profile/redemptions' },
-    { icon: 'time-outline', label: 'Historial de visitas', hint: 'Tus check-ins y reseñas pendientes', href: '/profile/visits' },
+    { icon: 'time-outline', label: 'Historial de visitas', hint: 'Tus visitas y reseñas pendientes', href: '/profile/visits' },
     { icon: 'heart-outline', label: 'Favoritos', href: '/profile/favorites' },
     { icon: 'analytics-outline', label: 'Estadísticas', href: '/profile/stats' },
   ],
@@ -77,33 +77,37 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxxl * 2 }}>
-        <LinearGradient
-          colors={gradients.primaryDeep}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: insets.top + spacing.xl }]}
-        >
-          <Pressable onPress={changeAvatar} accessibilityRole="button" accessibilityLabel="Cambiar foto de perfil">
-            <Avatar uri={user?.avatar} name={fullName} size={96} borderColor={colors.onPrimaryFaint} />
-            <View style={styles.camera}>
-              {uploading ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Ionicons name="camera" size={16} color={colors.primary} />
-              )}
-            </View>
-          </Pressable>
-          <AppText variant="h2" color="textInverse" style={{ marginTop: spacing.md }}>
+      <LinearGradient
+        colors={gradients.primary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + spacing.lg }]}
+      >
+        <Pressable onPress={changeAvatar} accessibilityRole="button" accessibilityLabel="Cambiar foto de perfil">
+          <Avatar uri={user?.avatar} name={fullName} size={64} borderColor={colors.onPrimaryFaint} />
+          <View style={styles.camera}>
+            {uploading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons name="camera" size={13} color={colors.primary} />
+            )}
+          </View>
+        </Pressable>
+        <View style={{ flex: 1 }}>
+          <AppText variant="h2" color="textInverse" numberOfLines={1}>
             {fullName}
           </AppText>
-          <AppText style={styles.soft}>{user?.email}</AppText>
+          <AppText style={styles.soft} numberOfLines={1}>
+            {user?.email}
+          </AppText>
           {user && (
-            <AppText variant="caption" style={[styles.soft, { marginTop: spacing.xs }]}>
+            <AppText variant="caption" style={styles.soft}>
               Cliente desde {formatDate(user.created_at)}
             </AppText>
           )}
-        </LinearGradient>
+        </View>
+      </LinearGradient>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxxl * 2 }}>
 
         <View style={[styles.stats, shadows.md]}>
           {stats.map((stat, i) => (
@@ -160,18 +164,21 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: spacing.xxxl + spacing.xl,
+    gap: spacing.lg,
+    paddingHorizontal: SCREEN_PADDING,
+    paddingBottom: spacing.xl,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
   camera: {
     position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    right: -4,
+    bottom: -4,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -180,7 +187,7 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: 'row',
     marginHorizontal: SCREEN_PADDING,
-    marginTop: -spacing.xxxl,
+    marginTop: spacing.lg,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     paddingVertical: spacing.lg,

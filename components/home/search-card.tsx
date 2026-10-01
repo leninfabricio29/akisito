@@ -20,14 +20,7 @@ export function SearchCard({ onPress, onNearby }: Props) {
           Busca cafés, restaurantes, gimnasios…
         </AppText>
       </Pressable>
-      <Pressable
-        onPress={onNearby}
-        accessibilityRole="button"
-        accessibilityLabel="Negocios cerca de mí"
-        style={({ pressed }) => [styles.nearby, pressed && { opacity: 0.8 }]}
-      >
-        <Ionicons name="location" size={20} color={colors.onPrimary} />
-      </Pressable>
+     
     </View>
   );
 }

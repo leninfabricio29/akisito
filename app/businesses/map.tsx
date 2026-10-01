@@ -40,24 +40,9 @@ export default function BusinessMapScreen() {
       </MapView>
 
       <View style={[styles.panel, shadows.lg, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <View style={styles.place}>
-          <View style={styles.pin}>
-            <Ionicons name="location" size={22} color={colors.onPrimary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <AppText variant="title" numberOfLines={1}>
-              {name}
-            </AppText>
-            {!!address && (
-              <AppText variant="caption" color="textSecondary" numberOfLines={2}>
-                {address}
-              </AppText>
-            )}
-          </View>
-        </View>
+        
         <View style={styles.actions}>
           <Button title="Cómo llegar" icon="navigate" size="lg" onPress={openDirections} style={{ flex: 1 }} />
-          <Button title="Waze" icon="car-outline" size="lg" variant="secondary" onPress={openWaze} />
         </View>
       </View>
     </View>

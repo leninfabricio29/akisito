@@ -79,12 +79,7 @@ export default function BusinessDashboard() {
   const peak = stats ? peakHour(stats) : null;
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={{ paddingBottom: spacing.xxxl * 2 }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.onPrimary} colors={[colors.primary]} />}
-    >
+    <View style={styles.root}>
       <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.headerRow}>
           <Avatar uri={business?.logo} name={name} size={48} rounded="md" borderColor={colors.onPrimaryFaint} />
@@ -120,36 +115,42 @@ export default function BusinessDashboard() {
           })}
         </View>
       </LinearGradient>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: spacing.xxxl * 2 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+      >
 
-      <View style={styles.content}>
-        <StatusBanner />
+        <View style={styles.content}>
+          <StatusBanner />
 
-        {error && !stats ? (
-          <Card>
-            <EmptyState compact icon="cloud-offline-outline" title="No pudimos cargar tus estadísticas" message={error} actionLabel="Reintentar" onAction={() => load(period)} />
-          </Card>
-        ) : !stats ? (
-          <View style={styles.kpis}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} height={104} rounded={radius.lg} style={{ flexBasis: '48%', flexGrow: 1 }} />
-            ))}
-          </View>
-        ) : (
-          <>
+          {error && !stats ? (
+            <Card>
+              <EmptyState compact icon="cloud-offline-outline" title="No pudimos cargar tus estadísticas" message={error} actionLabel="Reintentar" onAction={() => load(period)} />
+            </Card>
+          ) : !stats ? (
             <View style={styles.kpis}>
-              <KpiCard label="Visitas" value={stats.visits.value} icon="qr-code" change={stats.visits.change_pct} />
-              <KpiCard label="Clientes únicos" value={stats.unique_clients.value} icon="people" change={stats.unique_clients.change_pct} />
-              <KpiCard label="Clientes nuevos" value={stats.new_clients} icon="sparkles" tint={colors.success} hint={`${stats.returning_clients} regresaron`} />
-              <KpiCard label="Tasa de regreso" value={`${stats.repeat_rate_pct}%`} icon="repeat" tint={colors.accent} hint={`${stats.visits_per_client} visitas por cliente`} />
-              <KpiCard label="Canjes validados" value={stats.redemptions.value} icon="gift" tint={colors.accent} change={stats.redemptions.change_pct} />
-              <KpiCard
-                label="Calificación"
-                value={stats.reviews.count ? stats.reviews.rating_avg.toFixed(1) : '—'}
-                icon="star"
-                tint={colors.star}
-                hint={`${stats.reviews.count} reseñas en el periodo`}
-              />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} height={104} rounded={radius.lg} style={{ flexBasis: '48%', flexGrow: 1 }} />
+              ))}
             </View>
+          ) : (
+            <>
+              <View style={styles.kpis}>
+                <KpiCard label="Visitas" value={stats.visits.value} icon="qr-code" change={stats.visits.change_pct} />
+                <KpiCard label="Clientes únicos" value={stats.unique_clients.value} icon="people" change={stats.unique_clients.change_pct} />
+                <KpiCard label="Clientes nuevos" value={stats.new_clients} icon="sparkles" tint={colors.success} hint={`${stats.returning_clients} regresaron`} />
+                <KpiCard label="Tasa de regreso" value={`${stats.repeat_rate_pct}%`} icon="repeat" tint={colors.accent} hint={`${stats.visits_per_client} visitas por cliente`} />
+                <KpiCard label="Canjes validados" value={stats.redemptions.value} icon="gift" tint={colors.accent} change={stats.redemptions.change_pct} />
+                <KpiCard
+                  label="Calificación"
+                  value={stats.reviews.count ? stats.reviews.rating_avg.toFixed(1) : '—'}
+                  icon="star"
+                  tint={colors.star}
+                  hint={`${stats.reviews.count} reseñas en el periodo`}
+                />
+              </View>
 
           
 
@@ -159,42 +160,43 @@ export default function BusinessDashboard() {
 
           
 
-            {stats.top_clients.length > 0 && (
-              <Card>
-                <SectionHeader title="Clientes más fieles" subtitle="Más visitas en el periodo" />
-                {stats.top_clients.map((c, i) => (
-                  <View key={c.id} style={[styles.topRow, i > 0 && styles.topBorder]}>
-                    <AppText variant="bodyStrong" color="textMuted" style={{ width: 20 }}>
-                      {i + 1}
-                    </AppText>
-                    <Avatar name={c.name} size={34} />
-                    <AppText variant="title" style={{ flex: 1 }} numberOfLines={1}>
-                      {c.name}
-                    </AppText>
-                    <AppText variant="bodyStrong" color="primary">
-                      {c.visits} {c.visits === 1 ? 'visita' : 'visitas'}
-                    </AppText>
-                  </View>
-                ))}
-              </Card>
-            )}
-          </>
-        )}
+              {stats.top_clients.length > 0 && (
+                <Card>
+                  <SectionHeader title="Clientes más fieles" subtitle="Más visitas en el periodo" />
+                  {stats.top_clients.map((c, i) => (
+                    <View key={c.id} style={[styles.topRow, i > 0 && styles.topBorder]}>
+                      <AppText variant="bodyStrong" color="textMuted" style={{ width: 20 }}>
+                        {i + 1}
+                      </AppText>
+                      <Avatar name={c.name} size={34} />
+                      <AppText variant="title" style={{ flex: 1 }} numberOfLines={1}>
+                        {c.name}
+                      </AppText>
+                      <AppText variant="bodyStrong" color="primary">
+                        {c.visits} {c.visits === 1 ? 'visita' : 'visitas'}
+                      </AppText>
+                    </View>
+                  ))}
+                </Card>
+              )}
+            </>
+          )}
 
        
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: SCREEN_PADDING, paddingBottom: spacing.xxxl + spacing.md, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  header: { paddingHorizontal: SCREEN_PADDING, paddingBottom: spacing.lg, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  periods: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xl, padding: spacing.xs, borderRadius: radius.md, backgroundColor: colors.glass },
+  periods: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.lg, padding: spacing.xs, borderRadius: radius.md, backgroundColor: colors.glass },
   period: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radius.sm },
   periodActive: { backgroundColor: colors.surface },
-  content: { paddingHorizontal: SCREEN_PADDING, marginTop: -spacing.xxxl, gap: spacing.lg },
+  content: { paddingHorizontal: SCREEN_PADDING, paddingTop: spacing.lg, gap: spacing.lg },
   kpis: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   segments: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   segment: {

@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   code: {
-    marginVertical: spacing.xl,
+    marginVertical: spacing.lg,
     paddingVertical: spacing.lg,
     borderRadius: radius.lg,
     borderWidth: 2,
@@ -77,6 +77,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
   },
-  codeText: { fontSize: 34, fontWeight: '800', letterSpacing: 6, color: colors.primaryDark },
+  codeText: { fontSize: 24, fontWeight: '800', letterSpacing: 6, color: colors.primaryDark },
   expiry: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', marginBottom: spacing.xl },
 });

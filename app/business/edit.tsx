@@ -6,22 +6,23 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
-import { AppText, Button, Card, Chip, StackHeader, TextField } from '@/components/ui';
+import { LocationField } from '@/components/business/location-picker';
+import type { Coords } from '@/components/business/location-picker';
+import { AppText, Avatar, Button, Card, Chip, StackHeader, TextField } from '@/components/ui';
 import Alert from '@/components/ui/alert';
 import { useBusiness } from '@/context/business-context';
 import { useAlert } from '@/hooks/use-alert';
-import { getCurrentLocation } from '@/hooks/use-current-location';
 import { ApiError, businessService, errorMessage, portalService } from '@/services';
 import type { Category, OwnBusinessInput } from '@/services';
 import { colors, radius, SCREEN_PADDING, spacing } from '@/theme';
 import { categoryIcon } from '@/utils/category-icon';
 
-const MAX_IMAGES = 4;
-
 function toNullableInt(value: string): number | null {
   const n = parseInt(value, 10);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
+
+type ImageKind = 'logo' | 'cover';
 
 export default function EditBusinessScreen() {
   const router = useRouter();
@@ -30,21 +31,18 @@ export default function EditBusinessScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [name, setName] = useState(business?.name ?? '');
-  const [legalName, setLegalName] = useState(business?.legal_name ?? '');
   const [description, setDescription] = useState(business?.description ?? '');
   const [category, setCategory] = useState<number | null>(business?.category ?? null);
-  const [phone, setPhone] = useState(business?.phone ?? '');
-  const [website, setWebsite] = useState(business?.website ?? '');
-  const [schedule, setSchedule] = useState(business?.schedule ?? '');
   const [address, setAddress] = useState(business?.address ?? '');
-  const [coords, setCoords] = useState({ latitude: business?.latitude ?? '', longitude: business?.longitude ?? '' });
+  const [coords, setCoords] = useState<Coords | null>(
+    business ? { latitude: Number(business.latitude), longitude: Number(business.longitude) } : null,
+  );
   const [checkinPoints, setCheckinPoints] = useState(business?.checkin_points ? String(business.checkin_points) : '');
   const [reviewPoints, setReviewPoints] = useState(business?.review_points !== null && business?.review_points !== undefined ? String(business.review_points) : '');
   const [radiusM, setRadiusM] = useState(business?.checkin_radius_m ? String(business.checkin_radius_m) : '');
 
-  const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<ImageKind | null>(null);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
   useEffect(() => {
@@ -62,70 +60,37 @@ export default function EditBusinessScreen() {
 
   const defaults = business.effective_rules;
 
-  const locate = async () => {
-    setLocating(true);
-    try {
-      const location = await getCurrentLocation();
-      setCoords({ latitude: location.latitude.toFixed(6), longitude: location.longitude.toFixed(6) });
-    } catch (error) {
-      alert.error('No pudimos obtener la ubicación', errorMessage(error));
-    } finally {
-      setLocating(false);
-    }
-  };
-
-  const addImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 0.7 });
-    if (result.canceled || !result.assets[0]) return;
-    setUploading(true);
-    try {
-      const image = await portalService.addImage(result.assets[0].uri);
-      setBusiness({ ...business, images: [...business.images, image] });
-    } catch (error) {
-      alert.error('No se pudo subir la foto', errorMessage(error));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const removeImage = (imageId: number) =>
-    alert.show({
-      type: 'confirm',
-      title: 'Eliminar foto',
-      message: 'La foto dejará de verse en tu página.',
-      buttons: [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await portalService.removeImage(imageId);
-              setBusiness({ ...business, images: business.images.filter((i) => i.id !== imageId) });
-            } catch (error) {
-              alert.error('No se pudo eliminar', errorMessage(error));
-            }
-          },
-        },
-      ],
+  const pickImage = async (kind: ImageKind) => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: kind === 'logo' ? [1, 1] : [16, 9],
+      quality: 0.7,
     });
+    if (result.canceled || !result.assets[0]) return;
+    setUploading(kind);
+    try {
+      const uri = result.assets[0].uri;
+      setBusiness(await (kind === 'logo' ? portalService.updateLogo(uri) : portalService.updateCover(uri)));
+    } catch (error) {
+      alert.error(kind === 'logo' ? 'No se pudo actualizar el logo' : 'No se pudo actualizar la portada', errorMessage(error));
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const save = async () => {
-    const site = website.trim();
     const input: OwnBusinessInput = {
       name: name.trim(),
-      legal_name: legalName.trim(),
       description: description.trim(),
       category: category ?? business.category,
-      phone: phone.trim(),
-      website: site && !/^https?:\/\//i.test(site) ? `https://${site}` : site,
-      schedule: schedule.trim(),
       address: address.trim(),
-      latitude: coords.latitude,
-      longitude: coords.longitude,
       checkin_points: toNullableInt(checkinPoints),
       review_points: reviewPoints === '' ? null : Math.max(0, parseInt(reviewPoints, 10) || 0),
       checkin_radius_m: toNullableInt(radiusM),
+      ...(!business.location_locked && coords
+        ? { latitude: coords.latitude.toFixed(6), longitude: coords.longitude.toFixed(6) }
+        : {}),
     };
     setSaving(true);
     setErrors({});
@@ -149,11 +114,48 @@ export default function EditBusinessScreen() {
       <StackHeader title="Perfil del negocio" subtitle={`RUC ${business.ruc}`} />
       <KeyboardAwareScrollView contentContainerStyle={styles.content} enableOnAndroid extraScrollHeight={24} keyboardShouldPersistTaps="handled">
         <Card>
+          <AppText variant="h3">Imágenes</AppText>
+          <AppText variant="caption" color="textSecondary" style={{ marginBottom: spacing.md }}>
+            La portada es la imagen grande de tu página; el logo te identifica en listas y tarjetas.
+          </AppText>
+
+          <Pressable onPress={() => pickImage('cover')} style={styles.cover} accessibilityRole="button" accessibilityLabel="Cambiar portada">
+            {business.cover ? (
+              <Image source={{ uri: business.cover }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+            ) : (
+              <View style={styles.coverEmpty}>
+                <Ionicons name="image-outline" size={28} color={colors.primary} />
+                <AppText variant="caption" color="primary">
+                  Agregar portada (horizontal)
+                </AppText>
+              </View>
+            )}
+            <View style={styles.imageBadge}>
+              {uploading === 'cover' ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Ionicons name="camera" size={16} color={colors.onPrimary} />}
+            </View>
+          </Pressable>
+
+          <View style={styles.logoRow}>
+            <Pressable onPress={() => pickImage('logo')} accessibilityRole="button" accessibilityLabel="Cambiar logo">
+              <Avatar uri={business.logo} name={business.name} size={72} rounded="md" />
+              <View style={[styles.imageBadge, styles.logoBadge]}>
+                {uploading === 'logo' ? <ActivityIndicator size="small" color={colors.onPrimary} /> : <Ionicons name="camera" size={14} color={colors.onPrimary} />}
+              </View>
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <AppText variant="bodyStrong">Logo</AppText>
+              <AppText variant="caption" color="textSecondary">
+                Imagen cuadrada. Toca para cambiarlo.
+              </AppText>
+            </View>
+          </View>
+        </Card>
+
+        <Card>
           <AppText variant="h3" style={styles.title}>
             Información
           </AppText>
           <TextField label="Nombre comercial" value={name} onChangeText={setName} error={errors.name} />
-          <TextField label="Razón social (opcional)" value={legalName} onChangeText={setLegalName} error={errors.legal_name} />
           <TextField
             label="Descripción"
             placeholder="Cuéntales a tus clientes qué te hace especial"
@@ -171,65 +173,30 @@ export default function EditBusinessScreen() {
               <Chip key={c.id} label={c.name} icon={categoryIcon(c.icon)} selected={category === c.id} onPress={() => setCategory(c.id)} />
             ))}
           </ScrollView>
-          <View style={{ height: spacing.md }} />
-          <TextField label="Teléfono" icon="call-outline" value={phone} onChangeText={setPhone} keyboardType="phone-pad" error={errors.phone} />
-          <TextField label="Sitio web o red social" icon="globe-outline" placeholder="instagram.com/tunegocio" value={website} onChangeText={setWebsite} autoCapitalize="none" keyboardType="url" error={errors.website} />
-          <TextField label="Horario" icon="time-outline" placeholder="Lun a Sáb 8:00 - 20:00" value={schedule} onChangeText={setSchedule} error={errors.schedule} />
         </Card>
 
         <Card>
           <AppText variant="h3" style={styles.title}>
             Ubicación
           </AppText>
-          <TextField label="Dirección" icon="location-outline" value={address} onChangeText={setAddress} error={errors.address} />
-          <Pressable onPress={locate} style={styles.location} accessibilityRole="button">
-            {locating ? <ActivityIndicator color={colors.primary} /> : <Ionicons name="navigate-circle-outline" size={24} color={colors.primary} />}
-            <View style={{ flex: 1 }}>
-              <AppText variant="bodyStrong">Usar mi ubicación actual</AppText>
-              <AppText variant="caption" color={errors.latitude ? 'danger' : 'textSecondary'}>
-                {errors.latitude ?? `${Number(coords.latitude).toFixed(5)}, ${Number(coords.longitude).toFixed(5)} · hazlo desde el local`}
-              </AppText>
-            </View>
-          </Pressable>
-          <Button
-            title="Ver en mapa"
-            icon="map-outline"
-            variant="ghost"
-            size="sm"
-            onPress={() =>
-              router.push({ pathname: '/businesses/map', params: { lat: coords.latitude, lng: coords.longitude, name, address } })
-            }
-            style={{ alignSelf: 'flex-start', marginTop: spacing.xs }}
+          <LocationField
+            value={coords}
+            locked={business.location_locked}
+            error={errors.latitude ?? errors.longitude}
+            onChange={(picked) => {
+              setCoords({ latitude: picked.latitude, longitude: picked.longitude });
+              if (picked.address) setAddress(picked.address);
+            }}
           />
-        </Card>
-
-        <Card>
-          <AppText variant="h3">Fotos</AppText>
-          <AppText variant="caption" color="textSecondary" style={{ marginBottom: spacing.md }}>
-            La primera foto es la portada de tu página. Máximo {MAX_IMAGES}.
-          </AppText>
-          <View style={styles.gallery}>
-            {business.images.map((img, i) => (
-              <View key={img.id} style={styles.photo}>
-                <Image source={{ uri: img.image }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                {i === 0 && (
-                  <View style={styles.coverTag}>
-                    <AppText variant="caption" color="textInverse" style={{ fontSize: 10 }}>
-                      Portada
-                    </AppText>
-                  </View>
-                )}
-                <Pressable onPress={() => removeImage(img.id)} style={styles.photoDelete} hitSlop={6} accessibilityLabel="Eliminar foto">
-                  <Ionicons name="close" size={14} color={colors.onPrimary} />
-                </Pressable>
-              </View>
-            ))}
-            {business.images.length < MAX_IMAGES && (
-              <Pressable onPress={addImage} style={[styles.photo, styles.addPhoto]} accessibilityRole="button" accessibilityLabel="Agregar foto">
-                {uploading ? <ActivityIndicator color={colors.primary} /> : <Ionicons name="add" size={28} color={colors.primary} />}
-              </Pressable>
-            )}
-          </View>
+          <View style={{ height: spacing.md }} />
+          <TextField
+            label="Dirección"
+            icon="location-outline"
+            value={address}
+            onChangeText={setAddress}
+            error={errors.address}
+            hint="Se llena desde el mapa. Puedes corregirla o agregar una referencia."
+          />
         </Card>
 
         <Card>
@@ -280,45 +247,33 @@ const styles = StyleSheet.create({
   title: { marginBottom: spacing.md },
   label: { marginBottom: spacing.xs, marginLeft: spacing.xxs },
   chips: { gap: spacing.sm },
-  location: {
-    flexDirection: 'row',
+  cover: {
+    aspectRatio: 16 / 9,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.primarySoft,
+  },
+  coverEmpty: {
+    flex: 1,
     alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
+    justifyContent: 'center',
+    gap: spacing.xs,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
-  },
-  gallery: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  photo: { width: '48%', aspectRatio: 16 / 10, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceMuted },
-  addPhoto: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
     borderColor: colors.primaryLight,
-    backgroundColor: colors.primarySoft,
   },
-  coverTag: {
+  imageBadge: {
     position: 'absolute',
-    left: spacing.xs,
-    bottom: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primary,
-  },
-  photoDelete: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    right: spacing.sm,
+    bottom: spacing.sm,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: colors.scrimStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
+  logoBadge: { right: -6, bottom: -6, width: 26, height: 26, borderRadius: 13 },
 });

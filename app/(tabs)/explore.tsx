@@ -1,10 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BusinessCard } from '@/components/business/business-card';
-import { AppText, Button, Chip, EmptyState, Skeleton, TextField } from '@/components/ui';
+import { AppText, Button, Chip, EmptyState, FixedHeader, Skeleton, TextField } from '@/components/ui';
 import { useFavoriteToggle } from '@/hooks/use-favorite-toggle';
 import { getApproximateLocation } from '@/hooks/use-current-location';
 import { usePaginated } from '@/hooks/use-paginated';
@@ -19,7 +18,6 @@ type Coords = { latitude: number; longitude: number };
 
 export default function ExploreScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: string; focus?: string; nearby?: string }>();
   const searchRef = useRef<TextInput>(null);
 
@@ -78,7 +76,7 @@ export default function ExploreScreen() {
   const toggleFavorite = useFavoriteToggle(updateFavorite);
 
   const header = (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+    <FixedHeader>
       <AppText variant="h1">Explorar</AppText>
       <AppText color="textSecondary" style={{ marginBottom: spacing.md }}>
         {nearby ? 'Negocios aliados cerca de ti' : 'Todos los negocios aliados'}
@@ -93,10 +91,6 @@ export default function ExploreScreen() {
         autoCorrect={false}
       />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {coords && (
-          <Chip label="Cerca de mí" icon="navigate" selected={useNearby} onPress={() => setUseNearby((v) => !v)} />
-        )}
-        <Chip label="Todos" selected={category === null} onPress={() => setCategory(null)} />
         {categories.map((c) => (
           <Chip
             key={c.id}
@@ -112,7 +106,7 @@ export default function ExploreScreen() {
           {list.total} {list.total === 1 ? 'negocio' : 'negocios'}
         </AppText>
       )}
-    </View>
+    </FixedHeader>
   );
 
   const loadingState = (
@@ -139,12 +133,12 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.root}>
+      {header}
       <FlatList
         data={list.items}
         keyExtractor={(b) => String(b.id)}
-        ListHeaderComponent={header}
         ListEmptyComponent={list.loading || locating ? loadingState : empty}
-        contentContainerStyle={{ paddingBottom: spacing.xxxl * 2 }}
+        contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing.xxxl * 2 }}
         renderItem={({ item }) => (
           <View style={styles.item}>
             <BusinessCard
@@ -172,7 +166,6 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: SCREEN_PADDING, paddingBottom: spacing.md },
   chips: { gap: spacing.sm, paddingRight: spacing.lg },
   list: { paddingHorizontal: SCREEN_PADDING },
   item: { paddingHorizontal: SCREEN_PADDING, marginBottom: spacing.md },

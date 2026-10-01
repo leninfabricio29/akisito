@@ -3,7 +3,6 @@
 import { api } from './api/client';
 import { toFormData } from './api/files';
 import type {
-  BusinessImage,
   BusinessRedemption,
   BusinessReview,
   BusinessStats,
@@ -20,20 +19,25 @@ export type OwnBusinessInput = Partial<
   Pick<
     OwnBusiness,
     | 'name'
-    | 'legal_name'
     | 'category'
     | 'description'
     | 'address'
     | 'latitude'
     | 'longitude'
-    | 'phone'
-    | 'website'
-    | 'schedule'
     | 'checkin_points'
     | 'review_points'
     | 'checkin_radius_m'
   >
 >;
+
+export type BusinessCreateInput = {
+  name: string;
+  ruc: string;
+  category: number;
+  address: string;
+  latitude: string;
+  longitude: string;
+};
 
 export type RewardInput = {
   title: string;
@@ -53,13 +57,11 @@ function rewardBody(input: Partial<RewardInput>, imageUri?: string) {
 export const portalService = {
   // Perfil
   get: () => api.get<OwnBusiness>('/business/'),
+  create: (input: BusinessCreateInput) => api.post<OwnBusiness>('/business/', input),
   update: (input: OwnBusinessInput) => api.patch<OwnBusiness>('/business/', input),
   updateLogo: (uri: string) => api.patch<OwnBusiness>('/business/', toFormData({}, { logo: uri })),
+  updateCover: (uri: string) => api.patch<OwnBusiness>('/business/', toFormData({}, { cover: uri })),
   resubmit: () => api.post<OwnBusiness>('/business/resubmit/'),
-
-  // Galería
-  addImage: (uri: string) => api.post<BusinessImage>('/business/images/', toFormData({}, { image: uri })),
-  removeImage: (id: number) => api.delete(`/business/images/${id}/`),
 
   // QR
   qr: () => api.get<{ payload: string; rotated_at: string | null }>('/business/qr/'),

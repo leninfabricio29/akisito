@@ -12,6 +12,7 @@ export type Paginated<T> = {
 
 export type UserRole = 'client' | 'business' | 'admin';
 export type BusinessStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
+export type OnboardingStep = 'profile' | 'business';
 
 export type User = {
   id: number;
@@ -24,6 +25,8 @@ export type User = {
   avatar: string | null;
   role: UserRole;
   business: { id: number; name: string; status: BusinessStatus } | null;
+  /** Pasos que la app obliga a completar tras registrarse (vacío = perfil completo). */
+  pending_steps: OnboardingStep[];
   created_at: string;
 };
 
@@ -48,14 +51,8 @@ export type BusinessSummary = {
   my_points: number | null;
 };
 
-export type BusinessImage = { id: number; image: string; order: number };
-
 export type BusinessDetail = BusinessSummary & {
   description: string;
-  phone: string;
-  website: string;
-  schedule: string;
-  images: BusinessImage[];
   review_points: number;
 };
 
@@ -163,7 +160,7 @@ export type Redemption = {
   created_at: string;
 };
 
-export type NotificationKind = 'points' | 'reward' | 'redemption' | 'review' | 'winback' | 'business' | 'system';
+export type NotificationKind = 'points' | 'reward' | 'redemption' | 'review' | 'winback' | 'business' | 'new_business' | 'system';
 
 export type AppNotification = {
   id: number;
@@ -183,18 +180,17 @@ export type Banner = { id: number; title: string; image: string; business: numbe
 export type OwnBusiness = {
   id: number;
   name: string;
-  legal_name: string;
   ruc: string;
   taxpayer_type: 'natural' | 'private' | 'public';
   category: number;
   description: string;
   logo: string | null;
+  cover: string | null;
   address: string;
   latitude: string;
   longitude: string;
-  phone: string;
-  website: string;
-  schedule: string;
+  /** Aprobado: la ubicación ya no se puede cambiar desde la app. */
+  location_locked: boolean;
   status: BusinessStatus;
   status_reason: string;
   checkin_points: number | null;
@@ -203,7 +199,6 @@ export type OwnBusiness = {
   effective_rules: { checkin_points: number; review_points: number; checkin_radius_m: number };
   rating_avg: string;
   rating_count: number;
-  images: BusinessImage[];
   created_at: string;
 };
 

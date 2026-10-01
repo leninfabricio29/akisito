@@ -14,8 +14,6 @@ type Props = {
   onProfile: () => void;
 };
 
-export const HOME_HEADER_OVERLAP = 32;
-
 export function HomeHeader({ name, avatar, unread, onNotifications, onProfile }: Props) {
   const insets = useSafeAreaInsets();
   return (
@@ -59,12 +57,12 @@ export function HomeHeader({ name, avatar, unread, onNotifications, onProfile }:
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: SCREEN_PADDING,
-    paddingBottom: spacing.xl + HOME_HEADER_OVERLAP,
+    paddingBottom: spacing.lg,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   greeting: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 },
-  soft: { color: colors.onPrimaryMuted },
-  tagline: { marginTop: spacing.md },
+  soft: { color: colors.onPrimaryMuted, fontSize: 12, lineHeight: 20 },
+  tagline: { marginTop: spacing.sm },
 });

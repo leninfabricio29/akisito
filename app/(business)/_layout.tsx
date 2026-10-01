@@ -6,7 +6,7 @@ const TABS: Record<string, TabConfig> = {
   index: { label: 'Inicio', icon: 'grid-outline', iconActive: 'grid' },
   rewards: { label: 'Premios', icon: 'gift-outline', iconActive: 'gift' },
   customers: { label: 'Clientes', icon: 'people-outline', iconActive: 'people' },
-  account: { label: 'Mi negocio', icon: 'storefront-outline', iconActive: 'storefront' },
+  account: { label: 'Negocio', icon: 'storefront-outline', iconActive: 'storefront' },
 };
 
 export default function BusinessTabsLayout() {

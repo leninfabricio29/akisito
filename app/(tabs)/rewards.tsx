@@ -1,12 +1,11 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RedemptionCodeModal } from '@/components/rewards/redemption-code-modal';
 import { RewardCard } from '@/components/rewards/reward-card';
 import { WalletCard } from '@/components/rewards/wallet-card';
-import { AppText, Button, Card, Chip, EmptyState, IconButton, SectionHeader, Skeleton } from '@/components/ui';
+import { AppText, Button, Card, Chip, EmptyState, FixedHeader, IconButton, SectionHeader, Skeleton } from '@/components/ui';
 import Alert from '@/components/ui/alert';
 import { usePaginated } from '@/hooks/use-paginated';
 import { useRedeem } from '@/hooks/use-redeem';
@@ -18,7 +17,6 @@ type Filter = 'all' | 'available';
 
 export default function RewardsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [filter, setFilter] = useState<Filter>('all');
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -52,9 +50,8 @@ export default function RewardsScreen() {
   const visible = filter === 'available' ? rewards.items.filter((r) => r.can_redeem) : rewards.items;
   const walletWidth = Math.min(width * 0.72, 280);
 
-  const header = (
-    <View>
-      <View style={[styles.titleRow, { paddingTop: insets.top + spacing.md }]}>
+  const fixedHeader = (
+    <FixedHeader style={styles.titleRow}>
         <View style={{ flex: 1 }}>
           <AppText variant="h1">Premios</AppText>
           <AppText color="textSecondary">Canjea tus puntos en cada negocio</AppText>
@@ -66,8 +63,11 @@ export default function RewardsScreen() {
           color={colors.primary}
           onPress={() => router.push('/profile/redemptions')}
         />
-      </View>
+    </FixedHeader>
+  );
 
+  const header = (
+    <View style={{ paddingTop: spacing.lg }}>
       <View style={styles.section}>
         <SectionHeader title="Mis puntos" subtitle={wallets.length ? `${totalPoints} pts en ${wallets.length} negocios` : undefined} />
       </View>
@@ -131,6 +131,7 @@ export default function RewardsScreen() {
 
   return (
     <View style={styles.root}>
+      {fixedHeader}
       <FlatList
         data={visible}
         keyExtractor={(r) => String(r.id)}
@@ -177,7 +178,7 @@ export default function RewardsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  titleRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SCREEN_PADDING, marginBottom: spacing.lg },
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
   section: { paddingHorizontal: SCREEN_PADDING },
   wallets: { gap: spacing.md, flexDirection: 'row' },
   emptyWallet: { backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder },

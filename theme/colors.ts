@@ -8,42 +8,73 @@
 
 export const palette = {
   primary: {
-    50: '#EEF1FC',
-    100: '#DDE3F8',
-    200: '#B9C4F1',
-    300: '#8E9FE6',
-    400: '#5F76D6',
-    500: '#3D55C4',
-    600: '#233AB4',
-    700: '#1C2F94',
-    800: '#172674',
-    900: '#111C56',
-    950: '#0B1238',
+    50:  '#EEF0FB',
+    100: '#DDE1F6',
+    200: '#BAC2EE',
+    300: '#8F9BE0',
+    400: '#6472CE',
+    500: '#4655BC',
+    600: '#2F3FA8',   // marca
+    700: '#25348A',
+    800: '#1E2A6E',
+    900: '#182153',
+    950: '#0E1436',
   },
   accent: {
-    // Dorado para puntos y recompensas
-    50: '#FFF8EB',
-    100: '#FDEBC8',
-    400: '#F7B53D',
-    500: '#F29F0D',
-    600: '#D98300',
+    // Cobre en vez de dorado puro — más adulto, menos "medalla"
+    50:  '#FBF3ED',
+    100: '#F5E2D0',
+    200: '#EBC4A1',
+    300: '#DFA172',
+    400: '#D07E4B',
+    500: '#B8632F',   // fondo de badge
+    600: '#9C4F22',
+    700: '#7A3D1B',   // ← texto AA: 6.1:1 ✅
+    800: '#5C2D14',
+    900: '#3D1D0D',
   },
   neutral: {
-    0: '#FFFFFF',
-    50: '#F6F8FC',
-    100: '#EEF1F7',
-    200: '#E2E7F0',
-    300: '#CBD2DF',
-    400: '#98A2B8',
-    500: '#6B7690',
-    600: '#4B5570',
-    700: '#333C54',
-    800: '#1F263B',
-    900: '#111627',
+    // Neutros CÁLIDOS (tinte marrón sutil) — contrasta con el índigo
+    0:   '#FFFFFF',
+    50:  '#FAF9F7',
+    100: '#F3F1ED',
+    200: '#E7E4DE',
+    300: '#D0CCC3',
+    400: '#9F9A8E',
+    500: '#716C61',   // ← texto secundario: 5.0:1 ✅
+    600: '#514D45',
+    700: '#3A3730',
+    800: '#24221D',
+    900: '#141310',
+    950: '#0A0907',
   },
-  success: { 50: '#E8F8EE', 500: '#1FA35B', 700: '#157A43' },
-  warning: { 50: '#FFF5E5', 500: '#E68A00', 700: '#B36B00' },
-  danger: { 50: '#FDECEC', 500: '#E0393E', 700: '#B3262B' },
+  success: {
+    50:  '#E9F7EF',
+    100: '#CEEEDA',
+    400: '#34C77B',
+    500: '#1EA35C',
+    600: '#178A4C',
+    700: '#126E3D',
+    900: '#063D21',
+  },
+  warning: {
+    50:  '#FDF4E3',
+    100: '#FAE6BE',
+    400: '#F0B040',
+    500: '#D99022',
+    600: '#BC7A14',
+    700: '#96610F',
+    900: '#4F3307',
+  },
+  danger: {
+    50:  '#FCEDEC',
+    100: '#F8D7D5',
+    400: '#EE6E68',
+    500: '#D94A44',
+    600: '#C03A34',
+    700: '#9E2F2A',
+    900: '#5A1A17',
+  },
 } as const;
 
 export const colors = {
@@ -98,7 +129,7 @@ export const colors = {
 
 export const gradients = {
   primary: [palette.primary[500], palette.primary[700]] as const,
-  primaryDeep: [palette.primary[600], palette.primary[900]] as const,
+  primaryD: [palette.primary[600], palette.primary[900]] as const,
   accent: [palette.accent[400], palette.accent[600]] as const,
   imageFade: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)'] as const,
   imageFadeTop: ['rgba(0,0,0,0.45)', 'rgba(0,0,0,0)'] as const,

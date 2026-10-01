@@ -75,6 +75,26 @@ export default function BusinessAccountScreen() {
 
   return (
     <View style={styles.root}>
+      <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+        <Pressable onPress={changeLogo} accessibilityRole="button" accessibilityLabel="Cambiar logo">
+          <Avatar uri={business?.logo} name={business?.name} size={64} rounded="md" borderColor={colors.onPrimaryFaint} />
+          <View style={styles.camera}>
+            {uploading ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="camera" size={13} color={colors.primary} />}
+          </View>
+        </Pressable>
+        <View style={{ flex: 1, alignItems: 'flex-start' }}>
+          <AppText variant="h2" color="textInverse" numberOfLines={1}>
+            {business?.name ?? user?.business?.name}
+          </AppText>
+          {business && <AppText style={{ color: colors.onPrimaryMuted }}>RUC {business.ruc}</AppText>}
+          <View style={styles.badge}>
+            <Ionicons name={isApproved ? 'shield-checkmark' : 'hourglass-outline'} size={14} color={colors.onPrimary} />
+            <AppText variant="caption" color="textInverse">
+              {isApproved ? 'Negocio verificado' : 'En revisión'}
+            </AppText>
+          </View>
+        </View>
+      </LinearGradient>
       <ScrollView
         contentContainerStyle={{ paddingBottom: spacing.xxxl * 2 }}
         refreshControl={
@@ -85,34 +105,11 @@ export default function BusinessAccountScreen() {
               await reload();
               setRefreshing(false);
             }}
-            tintColor={colors.onPrimary}
+            tintColor={colors.primary}
             colors={[colors.primary]}
           />
         }
       >
-        <LinearGradient colors={gradients.primaryDeep} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + spacing.xl }]}>
-          <Pressable onPress={changeLogo} accessibilityRole="button" accessibilityLabel="Cambiar logo">
-            <Avatar uri={business?.logo} name={business?.name} size={92} rounded="md" borderColor={colors.onPrimaryFaint} />
-            <View style={styles.camera}>
-              {uploading ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="camera" size={16} color={colors.primary} />}
-            </View>
-          </Pressable>
-          <AppText variant="h2" color="textInverse" align="center" style={{ marginTop: spacing.md }}>
-            {business?.name ?? user?.business?.name}
-          </AppText>
-          {business && (
-            <AppText style={{ color: colors.onPrimaryMuted }}>
-              RUC {business.ruc}
-            </AppText>
-          )}
-          <View style={styles.badge}>
-            <Ionicons name={isApproved ? 'shield-checkmark' : 'hourglass-outline'} size={14} color={colors.onPrimary} />
-            <AppText variant="caption" color="textInverse">
-              {isApproved ? 'Negocio verificado' : 'En revisión'}
-            </AppText>
-          </View>
-        </LinearGradient>
-
         <View style={styles.body}>
           <StatusBanner />
           {groups.map((group, g) => (
@@ -156,14 +153,14 @@ export default function BusinessAccountScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { alignItems: 'center', paddingBottom: spacing.xxl, paddingHorizontal: SCREEN_PADDING, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, paddingBottom: spacing.xl, paddingHorizontal: SCREEN_PADDING, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   camera: {
     position: 'absolute',
     right: -4,
     bottom: -4,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -172,7 +169,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
     borderRadius: radius.pill,

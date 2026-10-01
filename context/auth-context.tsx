@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { getPushToken } from '@/hooks/use-push-notifications';
 import { ApiError, authService, notificationService } from '@/services';
-import type { AuthResponse, RegisterBusinessInput, RegisterClientInput, User } from '@/services';
+import type { AuthResponse, User } from '@/services';
 import { loadTokens, setSessionExpiredHandler, setTokens } from '@/services/api/token-store';
 
 const USER_KEY = 'akisito.user';
@@ -14,8 +14,7 @@ type AuthContextValue = {
   isClient: boolean;
   isBusiness: boolean;
   signIn: (email: string, password: string) => Promise<User>;
-  registerClient: (input: RegisterClientInput) => Promise<User>;
-  registerBusiness: (input: RegisterBusinessInput) => Promise<User>;
+  completeSignup: (email: string, code: string, password: string) => Promise<User>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: (user: User) => void;
@@ -75,13 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [startSession],
   );
 
-  const registerClient = useCallback(
-    async (input: RegisterClientInput) => startSession(await authService.registerClient(input)),
-    [startSession],
-  );
-
-  const registerBusiness = useCallback(
-    async (input: RegisterBusinessInput) => startSession(await authService.registerBusiness(input)),
+  const completeSignup = useCallback(
+    async (email: string, code: string, password: string) =>
+      startSession(await authService.signupComplete(email, code, password)),
     [startSession],
   );
 
@@ -104,13 +99,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isClient: user?.role === 'client',
       isBusiness: user?.role === 'business',
       signIn,
-      registerClient,
-      registerBusiness,
+      completeSignup,
       signOut,
       refreshUser,
       setUser,
     }),
-    [isLoading, user, signIn, registerClient, registerBusiness, signOut, refreshUser, setUser],
+    [isLoading, user, signIn, completeSignup, signOut, refreshUser, setUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -10,12 +10,13 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReviewForm } from '@/components/reviews/review-form';
 import { AppText, Avatar, Button, IconButton } from '@/components/ui';
 import { getCurrentLocation, LocationPermissionError } from '@/hooks/use-current-location';
+import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { ApiError, errorMessage, loyaltyService } from '@/services';
 import type { MyReview, ScanResult } from '@/services';
 import { colors, radius, shadows, spacing } from '@/theme';
@@ -62,6 +63,9 @@ function describeError(error: unknown): Extract<State, { step: 'error' }> {
 export default function ScannerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Edge-to-edge: la hoja se levanta a mano sobre el teclado al escribir la reseña.
+  const keyboard = useKeyboardHeight();
+  const { height: screenHeight } = useWindowDimensions();
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
   const [state, setState] = useState<State>({ step: 'scanning' });
@@ -179,10 +183,10 @@ export default function ScannerScreen() {
       )}
 
       {showResult && (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetWrap}>
+        <View style={[styles.sheetWrap, { bottom: keyboard, maxHeight: (screenHeight - keyboard) * 0.88 }]}>
           <ScrollView
             style={[styles.sheet, shadows.lg]}
-            contentContainerStyle={{ padding: spacing.xxl, paddingBottom: insets.bottom + spacing.xxl }}
+            contentContainerStyle={{ padding: spacing.xxl, paddingBottom: (keyboard ? 0 : insets.bottom) + spacing.xxl }}
             keyboardShouldPersistTaps="handled"
           >
             {state.step === 'error' && (
@@ -226,7 +230,7 @@ export default function ScannerScreen() {
               />
             )}
           </ScrollView>
-        </KeyboardAvoidingView>
+        </View>
       )}
     </View>
   );
@@ -335,7 +339,7 @@ const styles = StyleSheet.create({
   },
   processing: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center' },
   processingCard: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.xxl, alignItems: 'center', maxWidth: 280 },
-  sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '88%' },
+  sheetWrap: { position: 'absolute', left: 0, right: 0 },
   sheet: { backgroundColor: colors.surface, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl },
   resultIcon: {
     alignSelf: 'center',

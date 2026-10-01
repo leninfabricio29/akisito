@@ -7,15 +7,15 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BusinessInfo } from '@/components/business/business-info';
+import { RatingSummaryCard, ReviewItem } from '@/components/reviews/review-item';
 import { RedemptionCodeModal } from '@/components/rewards/redemption-code-modal';
 import { RewardCard } from '@/components/rewards/reward-card';
-import { RatingSummaryCard, ReviewItem } from '@/components/reviews/review-item';
 import { AppText, Avatar, Button, EmptyState, IconButton, Skeleton } from '@/components/ui';
 import Alert from '@/components/ui/alert';
 import { usePaginated } from '@/hooks/use-paginated';
 import { useRedeem } from '@/hooks/use-redeem';
+import type { BusinessDetail, PublicReview, ReviewSummary, Reward } from '@/services';
 import { businessService, errorMessage } from '@/services';
-import type { BusinessDetail, PublicReview, Reward, ReviewSummary } from '@/services';
 import { colors, gradients, radius, SCREEN_PADDING, shadows, spacing } from '@/theme';
 import { categoryIcon } from '@/utils/category-icon';
 import { formatRating } from '@/utils/format';
@@ -110,7 +110,7 @@ export default function BusinessDetailScreen() {
     );
   }
 
-  const cover = business?.images[0]?.image ?? business?.cover ?? null;
+  const cover = business?.cover ?? null;
 
   const header = (
     <View>
@@ -118,7 +118,7 @@ export default function BusinessDetailScreen() {
         {cover ? (
           <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
         ) : (
-          <LinearGradient colors={gradients.primaryDeep} style={StyleSheet.absoluteFill}>
+          <LinearGradient colors={gradients.primary} style={StyleSheet.absoluteFill}>
             {business && (
               <View style={styles.coverIcon}>
                 <Ionicons name={categoryIcon(business.category.icon)} size={64} color={colors.onPrimaryFaint} />

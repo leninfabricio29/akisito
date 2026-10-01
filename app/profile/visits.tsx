@@ -18,7 +18,7 @@ export default function VisitsScreen() {
 
   return (
     <View style={styles.root}>
-      <StackHeader title="Historial de visitas" subtitle="Tus check-ins en negocios aliados" />
+      <StackHeader title="Historial de visitas" subtitle="Tus visitas en negocios aliados" />
       <FlatList
         data={list.items}
         keyExtractor={(c) => String(c.id)}

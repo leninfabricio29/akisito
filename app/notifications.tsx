@@ -17,6 +17,7 @@ const KIND_ICON: Record<NotificationKind, { icon: keyof typeof Ionicons.glyphMap
   review: { icon: 'chatbubble', color: colors.primary, bg: colors.primarySoft },
   winback: { icon: 'heart', color: colors.danger, bg: colors.dangerSoft },
   business: { icon: 'storefront', color: colors.primary, bg: colors.primarySoft },
+  new_business: { icon: 'sparkles', color: colors.accent, bg: colors.accentSoft },
   system: { icon: 'information-circle', color: colors.textSecondary, bg: colors.surfaceMuted },
 };
 

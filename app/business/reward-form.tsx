@@ -257,7 +257,7 @@ export default function RewardFormScreen() {
           <Switch value={isActive} onValueChange={setIsActive} trackColor={{ true: colors.primaryLight, false: colors.border }} thumbColor={isActive ? colors.primary : colors.surface} />
         </Card>
 
-        <Button title={editing ? 'Guardar cambios' : 'Crear recompensa'} size="lg" fullWidth loading={saving} onPress={save} />
+        <Button title={editing ? 'Guardar cambios' : 'Crear recompensa'} size="lg" fullWidth loading={saving} onPress={save} style={{ marginBottom: spacing.lg }} />
         {editing && <Button title="Eliminar" variant="danger" icon="trash-outline" fullWidth onPress={remove} />}
       </KeyboardAwareScrollView>
       <Alert visible={alert.visibleConfig} config={alert.config} onDismiss={alert.hide} />

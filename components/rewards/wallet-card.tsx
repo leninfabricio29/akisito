@@ -13,7 +13,7 @@ export function WalletCard({ wallet, width, onPress }: Props) {
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Puntos en ${wallet.business.name}`}>
-      <LinearGradient colors={gradients.primaryDeep} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.card, { width }]}>
+      <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.card, { width }]}>
         <View style={styles.row}>
           <Avatar uri={wallet.business.logo} name={wallet.business.name} size={36} rounded="md" />
           <View style={{ flex: 1 }}>

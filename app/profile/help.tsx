@@ -6,7 +6,7 @@ import { AppText, Button, Card, StackHeader } from '@/components/ui';
 import { useAuth } from '@/context/auth-context';
 import { colors, radius, SCREEN_PADDING, spacing } from '@/theme';
 
-const SUPPORT_EMAIL = 'soporte@akisito.com';
+const SUPPORT_NUMBER = '999069254';
 
 const CLIENT_FAQS = [
   {
@@ -107,7 +107,7 @@ export default function HelpScreen() {
             title="Contactar soporte"
             icon="mail-outline"
             variant="secondary"
-            onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+            onPress={() => Linking.openURL(`whatsapp://send?phone=+593${SUPPORT_NUMBER}`)}
             style={{ marginTop: spacing.sm }}
           />
         </View>

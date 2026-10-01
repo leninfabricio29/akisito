@@ -2,37 +2,18 @@ import { api } from './api/client';
 import { toFormData } from './api/files';
 import { AuthResponse, User } from './api/types';
 
-export type RegisterClientInput = {
-  first_name: string;
-  last_name: string;
-  email: string;
-  password: string;
-  phone: string;
-  ci: string;
-};
-
-export type RegisterBusinessInput = {
-  first_name: string;
-  last_name: string;
-  email: string;
-  password: string;
-  phone: string;
-  business_name: string;
-  ruc: string;
-  category: number;
-  address: string;
-  latitude: string;
-  longitude: string;
-  schedule?: string;
-};
-
 export type UpdateProfileInput = Partial<Pick<User, 'first_name' | 'last_name' | 'phone' | 'ci' | 'birth_date'>>;
 
 export const authService = {
   login: (email: string, password: string) =>
     api.post<AuthResponse>('/auth/login/', { email: email.trim().toLowerCase(), password }, false),
-  registerClient: (input: RegisterClientInput) => api.post<AuthResponse>('/auth/register/client/', input, false),
-  registerBusiness: (input: RegisterBusinessInput) => api.post<AuthResponse>('/auth/register/business/', input, false),
+  // Registro: solo correo → código por correo → contraseña. El resto del perfil se completa en la app.
+  signupStart: (email: string, is_business: boolean) =>
+    api.post<{ detail: string }>('/auth/register/start/', { email, is_business }, false),
+  signupVerify: (email: string, code: string) =>
+    api.post<{ valid: boolean }>('/auth/register/verify/', { email, code }, false),
+  signupComplete: (email: string, code: string, password: string) =>
+    api.post<AuthResponse>('/auth/register/complete/', { email, code, password }, false),
 
   forgotPassword: (email: string) => api.post<{ detail: string }>('/auth/password/forgot/', { email }, false),
   verifyResetCode: (email: string, code: string) =>

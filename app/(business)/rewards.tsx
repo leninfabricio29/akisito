@@ -3,10 +3,9 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Switch, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StatusBanner } from '@/components/portal/status-banner';
-import { AppText, Button, Chip, EmptyState, PointsBadge } from '@/components/ui';
+import { AppText, Button, Chip, EmptyState, FixedHeader, PointsBadge } from '@/components/ui';
 import { useBusiness } from '@/context/business-context';
 import { usePaginated } from '@/hooks/use-paginated';
 import { portalService } from '@/services';
@@ -18,7 +17,6 @@ type Filter = 'active' | 'inactive' | 'all';
 
 export default function BusinessRewardsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { isApproved } = useBusiness();
   const [filter, setFilter] = useState<Filter>('active');
   const [toggling, setToggling] = useState<number | null>(null);
@@ -54,17 +52,15 @@ export default function BusinessRewardsScreen() {
 
   return (
     <View style={styles.root}>
+      <FixedHeader>
+        <AppText variant="h1">Recompensas</AppText>
+        <AppText color="textSecondary">Premios que tus clientes canjean con puntos</AppText>
+      </FixedHeader>
       <FlatList
         data={list.items}
         keyExtractor={(r) => String(r.id)}
         ListHeaderComponent={
-          <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-            <View style={styles.titleRow}>
-              <View style={{ flex: 1 }}>
-                <AppText variant="h1">Recompensas</AppText>
-                <AppText color="textSecondary">Premios que tus clientes canjean con puntos</AppText>
-              </View>
-            </View>
+          <View style={styles.header}>
             <StatusBanner />
             <Button
               title="Nueva recompensa"
@@ -148,8 +144,7 @@ export default function BusinessRewardsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: SCREEN_PADDING, gap: spacing.md, marginBottom: spacing.sm },
-  titleRow: { flexDirection: 'row', alignItems: 'center' },
+  header: { paddingHorizontal: SCREEN_PADDING, paddingTop: spacing.md, gap: spacing.md, marginBottom: spacing.sm },
   filters: { flexDirection: 'row', gap: spacing.sm },
   card: {
     flexDirection: 'row',

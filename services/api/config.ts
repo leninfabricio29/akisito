@@ -6,6 +6,6 @@
  *   - Teléfono en la LAN: http://<IP-de-tu-PC>:8000/api/v1
  *   - Producción:         https://api.akisito.com/api/v1
  */
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://172.30.0.188:8000/api/v1').replace(/\/$/, '');
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://winner.softkilla.es/api/v1').replace(/\/$/, '');
 
 export const REQUEST_TIMEOUT_MS = 20_000;

@@ -11,6 +11,10 @@ export const notificationService = {
   unregisterDevice: (token: string) => api.delete('/devices/', { token }),
 };
 
+export type PlatformVersion = { latest_version: string; min_version: string | null; store_url: string | null };
+export type AppVersionInfo = { android: PlatformVersion; ios: PlatformVersion; message: string };
+
 export const contentService = {
   banners: () => api.get<Banner[]>('/banners/', undefined, false),
+  appVersion: () => api.get<AppVersionInfo>('/app/version/', undefined, false),
 };

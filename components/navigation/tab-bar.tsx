@@ -66,7 +66,7 @@ export function TabBar({ state, navigation, tabs, center }: Props) {
             onPress={onPress}
             style={styles.item}
           >
-            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+            <View style={[styles.iconWrap]}>
               <Ionicons
                 name={focused ? config.iconActive : config.icon}
                 size={22}

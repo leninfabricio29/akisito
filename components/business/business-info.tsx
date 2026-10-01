@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Card } from '@/components/ui';
 import type { BusinessDetail } from '@/services';
@@ -46,8 +45,6 @@ function Row({
 }
 
 export function BusinessInfo({ business, onOpenMap }: Props) {
-  const website = business.website ? business.website.replace(/^https?:\/\//, '') : '';
-
   return (
     <View style={{ gap: spacing.md }}>
       <Card style={styles.program}>
@@ -96,30 +93,10 @@ export function BusinessInfo({ business, onOpenMap }: Props) {
 
       <Card padded={false} style={{ paddingHorizontal: spacing.lg }}>
         <Row icon="location-outline" label="Dirección" value={business.address} />
-        {!!business.schedule && <Row icon="time-outline" label="Horario" value={business.schedule} />}
         <Row icon={categoryIcon(business.category.icon)} label="Categoría" value={business.category.name} />
-        {!!business.phone && (
-          <Row icon="call-outline" label="Teléfono" value={business.phone} onPress={() => Linking.openURL(`tel:${business.phone}`)} />
-        )}
-        {!!website && (
-          <Row icon="globe-outline" label="Sitio web" value={website} onPress={() => Linking.openURL(business.website)} />
-        )}
       </Card>
 
       <Button title="Ver en mapa" icon="map" size="lg" fullWidth onPress={onOpenMap} />
-
-      {business.images.length > 1 && (
-        <View>
-          <AppText variant="title" style={{ marginBottom: spacing.sm }}>
-            Fotos
-          </AppText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-            {business.images.map((img) => (
-              <Image key={img.id} source={{ uri: img.image }} style={styles.photo} contentFit="cover" transition={150} />
-            ))}
-          </ScrollView>
-        </View>
-      )}
     </View>
   );
 }
@@ -145,5 +122,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  photo: { width: 140, height: 100, borderRadius: radius.md, backgroundColor: colors.surfaceMuted },
 });

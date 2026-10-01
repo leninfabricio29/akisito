@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,7 +27,7 @@ export function AuthLayout({ title, subtitle, onBack, children, footer }: Props)
         contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + spacing.xl }}
       >
         <LinearGradient
-          colors={gradients.primaryDeep}
+          colors={gradients.primary}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + spacing.lg }]}
@@ -42,8 +42,11 @@ export function AuthLayout({ title, subtitle, onBack, children, footer }: Props)
               style={styles.back}
             />
           )}
-          <View style={styles.logo}>
-            <Ionicons name="ribbon" size={30} color={colors.primary} />
+          <View >
+            <Image
+  source={require('../../assets/images/icon.png')}
+  style={styles.logo}
+/>
           </View>
           <AppText variant="h1" color="textInverse" align="center">
             {title}
@@ -73,7 +76,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: radius.xl,
-    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.lg,

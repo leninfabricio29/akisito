@@ -2,9 +2,6 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,6 +12,7 @@ import {
 
 import { ReviewItem } from '@/components/reviews/review-item';
 import { AppText, Button, Chip, EmptyState, StackHeader } from '@/components/ui';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useBusiness } from '@/context/business-context';
 import { usePaginated } from '@/hooks/use-paginated';
 import { errorMessage, portalService } from '@/services';
@@ -103,36 +101,31 @@ export default function BusinessReviewsScreen() {
         ListFooterComponent={list.loadingMore ? <ActivityIndicator color={colors.primary} style={{ margin: spacing.lg }} /> : null}
       />
 
-      <Modal visible={!!target} transparent animationType="slide" onRequestClose={() => setTarget(null)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.overlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setTarget(null)} accessibilityLabel="Cerrar" />
-          <View style={styles.sheet}>
-            <AppText variant="h3">Responder a {target?.author}</AppText>
-            {!!target?.comment && (
-              <AppText color="textSecondary" numberOfLines={3} style={{ marginTop: spacing.xs }}>
-                “{target.comment}”
-              </AppText>
-            )}
-            <TextInput
-              value={reply}
-              onChangeText={setReply}
-              placeholder="Agradece y, si algo salió mal, cuéntale cómo lo resolverás"
-              placeholderTextColor={colors.textMuted}
-              multiline
-              maxLength={1000}
-              autoFocus
-              style={styles.input}
-            />
-            {error && (
-              <AppText variant="caption" color="danger" style={{ marginBottom: spacing.sm }}>
-                {error}
-              </AppText>
-            )}
-            <Button title="Publicar respuesta" icon="send" size="lg" fullWidth disabled={!reply.trim()} loading={sending} onPress={send} />
-            <Button title="Cancelar" variant="ghost" fullWidth onPress={() => setTarget(null)} style={{ marginTop: spacing.xs }} />
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <BottomSheet visible={!!target} onClose={() => setTarget(null)}>
+        <AppText variant="h3">Responder a {target?.author}</AppText>
+        {!!target?.comment && (
+          <AppText color="textSecondary" numberOfLines={3} style={{ marginTop: spacing.xs }}>
+            “{target.comment}”
+          </AppText>
+        )}
+        <TextInput
+          value={reply}
+          onChangeText={setReply}
+          placeholder="Agradece y, si algo salió mal, cuéntale cómo lo resolverás"
+          placeholderTextColor={colors.textMuted}
+          multiline
+          maxLength={1000}
+          autoFocus
+          style={styles.input}
+        />
+        {error && (
+          <AppText variant="caption" color="danger" style={{ marginBottom: spacing.sm }}>
+            {error}
+          </AppText>
+        )}
+        <Button title="Publicar respuesta" icon="send" size="lg" fullWidth disabled={!reply.trim()} loading={sending} onPress={send} />
+        <Button title="Cancelar" variant="ghost" fullWidth onPress={() => setTarget(null)} style={{ marginTop: spacing.xs }} />
+      </BottomSheet>
     </View>
   );
 }
@@ -142,14 +135,6 @@ const styles = StyleSheet.create({
   chips: { gap: spacing.sm, padding: SCREEN_PADDING },
   item: { marginHorizontal: SCREEN_PADDING, marginBottom: spacing.md },
   actions: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.xs, paddingTop: spacing.sm },
-  overlay: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xxl,
-    borderTopRightRadius: radius.xxl,
-    padding: spacing.xxl,
-    paddingBottom: spacing.xxxl,
-  },
   input: {
     minHeight: 110,
     textAlignVertical: 'top',

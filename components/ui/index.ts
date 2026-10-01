@@ -3,6 +3,7 @@ export { Button } from './button';
 export { Card } from './card';
 export { Chip } from './chip';
 export { EmptyState } from './empty-state';
+export { FixedHeader } from './fixed-header';
 export { IconButton } from './icon-button';
 export { PointsBadge } from './points-badge';
 export { ProgressBar } from './progress-bar';
